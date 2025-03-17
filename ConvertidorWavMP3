@@ -1,0 +1,46 @@
+#include <gtk/gtk.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// Función para convertir WAV a MP3 utilizando el comando de LAME
+void convertir_archivo(const char *entrada, const char *salida) {
+    char comando[512];
+    snprintf(comando, sizeof(comando), "lame %s %s", entrada, salida);
+    int resultado = system(comando);
+
+    if (resultado == 0) {
+        printf("Conversión exitosa: %s a %s\n", entrada, salida);
+    } else {
+        printf("Error durante la conversión.\n");
+    }
+}
+
+// Callback para manejar la acción de conversión
+void on_convertir_clicked(GtkWidget *widget, gpointer data) {
+    const char *entrada = "entrada.wav"; // Aquí podrías obtener nombres dinámicamente
+    const char *salida = "salida.mp3";   // Aquí también podrías elegir dinámicamente
+
+    convertir_archivo(entrada, salida);
+}
+
+// Crear la interfaz gráfica básica
+int main(int argc, char *argv[]) {
+    GtkWidget *ventana, *boton;
+
+    gtk_init(&argc, &argv);
+
+    ventana = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(ventana), "Convertidor WAV a MP3");
+    gtk_window_set_default_size(GTK_WINDOW(ventana), 300, 100);
+
+    boton = gtk_button_new_with_label("Convertir");
+    g_signal_connect(boton, "clicked", G_CALLBACK(on_convertir_clicked), NULL);
+    gtk_container_add(GTK_CONTAINER(ventana), boton);
+
+    g_signal_connect(ventana, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    gtk_widget_show_all(ventana);
+
+    gtk_main();
+    return 0;
+}
