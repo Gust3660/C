@@ -1,0 +1,41 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <qrencode.h>
+
+void generar_qr(const char *texto, const char *archivo_salida) {
+    QRcode *qrcode = QRcode_encodeString(texto, 0, QR_ECLEVEL_L, QR_MODE_8, 1);
+
+    if (!qrcode) {
+        fprintf(stderr, "Error al generar el código QR.\n");
+        return;
+    }
+
+    FILE *archivo = fopen(archivo_salida, "wb");
+    if (!archivo) {
+        fprintf(stderr, "No se pudo abrir el archivo de salida.\n");
+        QRcode_free(qrcode);
+        return;
+    }
+
+    // Escritura del código QR en formato PBM (blanco y negro)
+    fprintf(archivo, "P1\n%d %d\n", qrcode->width, qrcode->width);
+    for (int y = 0; y < qrcode->width; y++) {
+        for (int x = 0; x < qrcode->width; x++) {
+            fprintf(archivo, "%c ", (qrcode->data[y * qrcode->width + x] & 0x01) ? '1' : '0');
+        }
+        fprintf(archivo, "\n");
+    }
+
+    fclose(archivo);
+    QRcode_free(qrcode);
+    printf("Código QR generado correctamente en el archivo '%s'.\n", archivo_salida);
+}
+
+int main() {
+    const char *texto = "¡Hola, mundo!";
+    const char *archivo_salida = "codigo_qr.pbm";
+
+    generar_qr(texto, archivo_salida);
+
+    return 0;
+}
