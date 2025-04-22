@@ -1,0 +1,84 @@
+#include <gtk/gtk.h>
+
+static GtkWidget *entry;  // El campo de texto donde se muestra el resultado
+
+// Función para actualizar el texto en la entrada
+static void button_clicked(GtkWidget *button, gpointer data) {
+    const gchar *button_label = gtk_button_get_label(GTK_BUTTON(button));
+    const gchar *current_text = gtk_entry_get_text(GTK_ENTRY(entry));
+    
+    // Si el botón es "=" (igual), realiza la operación
+    if (g_strcmp0(button_label, "=") == 0) {
+        gchar *result = g_strdup_printf("%s", current_text);  // Aquí puedes agregar código para hacer los cálculos
+        gtk_entry_set_text(GTK_ENTRY(entry), result);
+        g_free(result);
+    } 
+    // Si el botón es "C", limpia la entrada
+    else if (g_strcmp0(button_label, "C") == 0) {
+        gtk_entry_set_text(GTK_ENTRY(entry), "");
+    } 
+    // Para cualquier otro botón, agrega el texto al campo de entrada
+    else {
+        gchar *new_text = g_strdup_printf("%s%s", current_text, button_label);
+        gtk_entry_set_text(GTK_ENTRY(entry), new_text);
+        g_free(new_text);
+    }
+}
+
+// Crear la interfaz de la calculadora
+static GtkWidget* create_calculator() {
+    GtkWidget *grid;
+    GtkWidget *button;
+
+    grid = gtk_grid_new();
+    gtk_container_add(GTK_CONTAINER(grid), entry);
+
+    // Definir los botones
+    const gchar *buttons[4][4] = {
+        {"7", "8", "9", "/"},
+        {"4", "5", "6", "*"},
+        {"1", "2", "3", "-"},
+        {"C", "0", "=", "+"}
+    };
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            button = gtk_button_new_with_label(buttons[i][j]);
+            g_signal_connect(button, "clicked", G_CALLBACK(button_clicked), NULL);
+            gtk_grid_attach(GTK_GRID(grid), button, j, i + 1, 1, 1);
+        }
+    }
+
+    return grid;
+}
+
+int main(int argc, char *argv[]) {
+    GtkWidget *window;
+
+    // Inicializar GTK
+    gtk_init(&argc, &argv);
+
+    // Crear ventana
+    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window), "Calculadora");
+    gtk_window_set_default_size(GTK_WINDOW(window), 250, 300);
+
+    // Crear la entrada para mostrar los resultados
+    entry = gtk_entry_new();
+    gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
+    
+    // Crear la interfaz
+    GtkWidget *calculator = create_calculator();
+    gtk_container_add(GTK_CONTAINER(window), calculator);
+
+    // Conectar la señal para cerrar la ventana
+    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Mostrar todo
+    gtk_widget_show_all(window);
+
+    // Iniciar el bucle principal de GTK
+    gtk_main();
+
+    return 0;
+}
