@@ -1,0 +1,59 @@
+#include <windows.h>
+#include <stdio.h>
+#include <tlhelp32.h>
+
+// Función para obtener el PID del proceso por su nombre
+DWORD GetProcessID(const char* processName) {
+    DWORD pid = 0;
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot == INVALID_HANDLE_VALUE) return 0;
+
+    PROCESSENTRY32 pe;
+    pe.dwSize = sizeof(PROCESSENTRY32);
+    if (Process32First(hSnapshot, &pe)) {
+        do {
+            if (_stricmp(pe.szExeFile, processName) == 0) {
+                pid = pe.th32ProcessID;
+                break;
+            }
+        } while (Process32Next(hSnapshot, &pe));
+    }
+    CloseHandle(hSnapshot);
+    return pid;
+}
+
+// Función para obtener el tiempo de CPU de un proceso
+void GetProcessCPUTime(DWORD processID) {
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+    if (hProcess) {
+        FILETIME createTime, exitTime, kernelTime, userTime;
+        if (GetProcessTimes(hProcess, &createTime, &exitTime, &kernelTime, &userTime)) {
+            ULARGE_INTEGER kt, ut;
+            kt.HighPart = kernelTime.dwHighDateTime;
+            kt.LowPart = kernelTime.dwLowDateTime;
+            ut.HighPart = userTime.dwHighDateTime;
+            ut.LowPart = userTime.dwLowDateTime;
+
+            printf("Tiempo de CPU utilizado por el proceso:\n");
+            printf("Kernel Time: %llu ms\n", kt.QuadPart / 10000);
+            printf("User Time: %llu ms\n", ut.QuadPart / 10000);
+        }
+        CloseHandle(hProcess);
+    } else {
+        printf("No se pudo abrir el proceso.\n");
+    }
+}
+
+int main() {
+    const char* processName = "WINWORD.EXE"; // Nombre de proceso de Word
+    DWORD pid = GetProcessID(processName);
+    
+    if (pid) {
+        printf("Proceso %s encontrado con PID: %lu\n", processName, pid);
+        GetProcessCPUTime(pid);
+    } else {
+        printf("Proceso %s no encontrado.\n", processName);
+    }
+
+    return 0;
+}
